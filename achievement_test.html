@@ -1,23 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Mega Man X - Achievement Debug</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Mega Man X - Achievement Debug
+    </title>
 
     <style>
+
         html,
         body {
             margin: 0;
             padding: 0;
+
             background: #111;
-            color: white;
+            color: #fff;
+
+            font-family: monospace;
         }
 
         #game-container {
             width: 512px;
             height: 448px;
+
             max-width: 100%;
         }
 
@@ -27,14 +39,17 @@
         }
 
         #debug {
+
             position: fixed;
+
             left: 0;
             right: 0;
             bottom: 0;
 
-            height: 300px;
+            height: 360px;
 
             background: #050505;
+
             color: #ddd;
 
             border-top: 3px solid #2680EF;
@@ -46,13 +61,20 @@
             padding: 10px;
 
             font-family: monospace;
+
             font-size: 13px;
 
+            line-height: 1.4;
+
             white-space: pre-wrap;
+
+            word-break: break-word;
         }
 
         #debug-buttons {
+
             position: sticky;
+
             top: 0;
 
             background: #050505;
@@ -62,15 +84,19 @@
             margin-bottom: 8px;
 
             border-bottom: 1px solid #333;
+
+            z-index: 2;
         }
 
         button {
+
             background: #222;
+
             color: white;
 
             border: 1px solid #555;
 
-            padding: 6px 12px;
+            padding: 7px 12px;
 
             margin-right: 5px;
 
@@ -94,45 +120,87 @@
         .err {
             color: #f87171;
         }
+
+        .title {
+            color: #60a5fa;
+
+            font-weight: bold;
+
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
     </style>
+
 </head>
+
 
 <body>
 
-    <!-- EXACTAMENTE como megamanx.html -->
+
+    <!-- ========================================================= -->
+    <!-- EMULATOR                                                   -->
+    <!-- ========================================================= -->
 
     <div id="game-container">
+
         <div id="game"></div>
+
     </div>
 
 
-    <!-- Configuración EXACTA de megamanx.html -->
+    <!-- ========================================================= -->
+    <!-- CONFIGURACIÓN EXACTA DE megamanx.html                      -->
+    <!-- ========================================================= -->
 
     <script>
+
         EJS_player = "#game";
+
         EJS_core = "snes";
+
         EJS_gameName = "Mega Man X";
+
         EJS_AdUrl = "img/mmxad.png";
-        EJS_AdSize = ["260px", "180px"];
+
+        EJS_AdSize = [
+            "260px",
+            "180px"
+        ];
+
         EJS_color = "#2680EF";
-        EJS_pathtodata = "emulatorjs/data/";
-        EJS_gameUrl = "roms/Mega Man X.sfc";
+
+        EJS_pathtodata =
+            "emulatorjs/data/";
+
+        EJS_gameUrl =
+            "roms/Mega Man X.sfc";
+
     </script>
 
 
-    <!-- Debug independiente -->
+    <!-- ========================================================= -->
+    <!-- DEBUG                                                       -->
+    <!-- ========================================================= -->
 
     <div id="debug">
 
         <div id="debug-buttons">
-            <button onclick="achievementDebugInspect()">
+
+            <button
+                onclick="achievementDebugInspect()"
+            >
                 INSPECCIONAR
             </button>
 
-            <button onclick="achievementDebugClear()">
+            <button
+                onclick="achievementDebugClear()"
+            >
                 LIMPIAR
             </button>
+
         </div>
+
 
         <div id="debug-output"></div>
 
@@ -140,20 +208,27 @@
 
 
     <script>
+
         /*
-         * IMPORTANTE:
-         * Usamos nombres muy específicos para evitar
-         * conflictos con variables internas de EmulatorJS.
+         * =========================================================
+         * CONSOLA
+         * =========================================================
          */
 
         var achievementDebugOutput =
-            document.getElementById("debug-output");
+            document.getElementById(
+                "debug-output"
+            );
 
 
-        function achievementDebugLog(message, type) {
+        function achievementDebugLog(
+            message,
+            type
+        ) {
 
             var line =
                 document.createElement("div");
+
 
             if (type === "ok") {
                 line.className = "ok";
@@ -167,21 +242,28 @@
                 line.className = "err";
             }
 
+
             line.textContent =
                 "[" +
                 new Date().toLocaleTimeString() +
                 "] " +
                 String(message);
 
-            achievementDebugOutput.appendChild(line);
+
+            achievementDebugOutput.appendChild(
+                line
+            );
+
 
             achievementDebugOutput.scrollTop =
                 achievementDebugOutput.scrollHeight;
+
 
             console.log(
                 "[AchievementDebug]",
                 message
             );
+
         }
 
 
@@ -193,7 +275,9 @@
 
 
         /*
-         * Capturar errores JavaScript.
+         * =========================================================
+         * ERRORES GLOBALES
+         * =========================================================
          */
 
         window.addEventListener(
@@ -230,88 +314,56 @@
 
 
         achievementDebugLog(
-            "Página de diagnóstico cargada.",
+            "========================================"
+        );
+
+        achievementDebugLog(
+            "Achievement Debug iniciado.",
             "ok"
         );
 
-
         achievementDebugLog(
-            "Cargando EmulatorJS..."
+            "Esperando a EmulatorJS..."
         );
 
 
         /*
-         * Comprobar EJS_emulator.
-         *
-         * loader.js crea esta variable cuando termina
-         * de cargar EmulatorJS.
-         */
-
-        var achievementDebugWatcher =
-            setInterval(
-                function () {
-
-                    if (!window.EJS_emulator) {
-                        return;
-                    }
-
-                    clearInterval(
-                        achievementDebugWatcher
-                    );
-
-                    achievementDebugLog(
-                        "EJS_emulator encontrado.",
-                        "ok"
-                    );
-
-                    achievementDebugLog(
-                        "EmulatorJS está disponible."
-                    );
-
-                    try {
-
-                        window.EJS_emulator.on(
-                            "start",
-                            function () {
-
-                                achievementDebugLog(
-                                    "EVENTO: start",
-                                    "ok"
-                                );
-
-                                achievementDebugInspect();
-
-                            }
-                        );
-
-                        achievementDebugLog(
-                            "Listener 'start' registrado.",
-                            "ok"
-                        );
-
-                    } catch (error) {
-
-                        achievementDebugLog(
-                            "Error registrando start: " +
-                            error,
-                            "err"
-                        );
-
-                    }
-
-                },
-                250
-            );
-
-
-        /*
-         * Inspección manual.
+         * =========================================================
+         * INSPECCIÓN PRINCIPAL
+         * =========================================================
          */
 
         function achievementDebugInspect() {
 
             achievementDebugLog(
-                "========== INSPECCIÓN =========="
+                ""
+            );
+
+            achievementDebugLog(
+                "========================================"
+            );
+
+            achievementDebugLog(
+                "INSPECCIÓN COMPLETA"
+            );
+
+            achievementDebugLog(
+                "========================================"
+            );
+
+
+            /*
+             * -----------------------------------------------------
+             * EJS_emulator
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ EJS_EMULATOR ------"
             );
 
 
@@ -322,23 +374,61 @@
             if (!emulator) {
 
                 achievementDebugLog(
-                    "EJS_emulator NO existe.",
+                    "window.EJS_emulator NO existe.",
                     "warn"
                 );
 
                 return;
+
             }
 
 
             achievementDebugLog(
-                "EJS_emulator: OK",
+                "window.EJS_emulator: OK",
                 "ok"
             );
 
 
+            try {
+
+                var emulatorKeys =
+                    Object.keys(emulator);
+
+
+                achievementDebugLog(
+                    "Propiedades:"
+                );
+
+
+                achievementDebugLog(
+                    emulatorKeys.join(", ")
+                );
+
+            } catch (error) {
+
+                achievementDebugLog(
+                    "Error leyendo EJS_emulator: " +
+                    error,
+                    "err"
+                );
+
+            }
+
+
             /*
-             * GameManager
+             * -----------------------------------------------------
+             * GAMEMANAGER
+             * -----------------------------------------------------
              */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ GAMEMANAGER ------"
+            );
+
 
             var gameManager =
                 emulator.gameManager;
@@ -351,29 +441,99 @@
                     "warn"
                 );
 
+                achievementDebugLog(
+                    "Es posible que el core todavía no haya terminado de iniciar."
+                );
+
+                return;
+
+            }
+
+
+            achievementDebugLog(
+                "gameManager: OK",
+                "ok"
+            );
+
+
+            try {
+
+                achievementDebugLog(
+                    "Propiedades:"
+                );
+
+
+                achievementDebugLog(
+                    Object.keys(
+                        gameManager
+                    ).join(", ")
+                );
+
+            } catch (error) {
+
+                achievementDebugLog(
+                    "Error leyendo GameManager: " +
+                    error,
+                    "err"
+                );
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * GAMEMANAGER.EJS
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ GAMEMANAGER.EJS ------"
+            );
+
+
+            var ejs =
+                gameManager.EJS;
+
+
+            if (!ejs) {
+
+                achievementDebugLog(
+                    "gameManager.EJS NO existe.",
+                    "warn"
+                );
+
             } else {
 
                 achievementDebugLog(
-                    "gameManager: OK",
+                    "gameManager.EJS: OK",
                     "ok"
                 );
 
 
                 try {
 
-                    achievementDebugLog(
-                        "GameManager keys:"
-                    );
+                    var ejsKeys =
+                        Object.keys(ejs);
+
 
                     achievementDebugLog(
-                        Object.keys(gameManager)
-                            .join(", ")
+                        "Propiedades:"
                     );
+
+
+                    achievementDebugLog(
+                        ejsKeys.join(", ")
+                    );
+
 
                 } catch (error) {
 
                     achievementDebugLog(
-                        "No se pudieron leer las propiedades de GameManager: " +
+                        "Error leyendo EJS: " +
                         error,
                         "err"
                     );
@@ -384,12 +544,176 @@
 
 
             /*
-             * Module
+             * -----------------------------------------------------
+             * GAMEMANAGER.FUNCTIONS
+             * -----------------------------------------------------
              */
 
-            if (!gameManager) {
-                return;
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ GAMEMANAGER.FUNCTIONS ------"
+            );
+
+
+            var functions =
+                gameManager.functions;
+
+
+            if (!functions) {
+
+                achievementDebugLog(
+                    "gameManager.functions NO existe.",
+                    "warn"
+                );
+
+            } else {
+
+                achievementDebugLog(
+                    "gameManager.functions: OK",
+                    "ok"
+                );
+
+
+                try {
+
+                    var functionKeys =
+                        Object.keys(
+                            functions
+                        );
+
+
+                    achievementDebugLog(
+                        "Propiedades:"
+                    );
+
+
+                    achievementDebugLog(
+                        functionKeys.join(", ")
+                    );
+
+
+                    /*
+                     * Solo funciones
+                     */
+
+                    var callableFunctions =
+                        functionKeys.filter(
+                            function (key) {
+
+                                return (
+                                    typeof
+                                    functions[key] ===
+                                    "function"
+                                );
+
+                            }
+                        );
+
+
+                    achievementDebugLog(
+                        ""
+                    );
+
+                    achievementDebugLog(
+                        "Funciones:"
+                    );
+
+
+                    achievementDebugLog(
+                        callableFunctions.length
+                            ? callableFunctions.join(", ")
+                            : "(ninguna)"
+                    );
+
+
+                } catch (error) {
+
+                    achievementDebugLog(
+                        "Error leyendo functions: " +
+                        error,
+                        "err"
+                    );
+
+                }
+
             }
+
+
+            /*
+             * -----------------------------------------------------
+             * GAMEMANAGER.FS
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ GAMEMANAGER.FS ------"
+            );
+
+
+            var fs =
+                gameManager.FS;
+
+
+            if (!fs) {
+
+                achievementDebugLog(
+                    "gameManager.FS NO existe.",
+                    "warn"
+                );
+
+            } else {
+
+                achievementDebugLog(
+                    "gameManager.FS: OK",
+                    "ok"
+                );
+
+
+                try {
+
+                    achievementDebugLog(
+                        "Propiedades:"
+                    );
+
+
+                    achievementDebugLog(
+                        Object.keys(fs).join(", ")
+                    );
+
+
+                } catch (error) {
+
+                    achievementDebugLog(
+                        "Error leyendo FS: " +
+                        error,
+                        "err"
+                    );
+
+                }
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * MODULE
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ MODULE ------"
+            );
 
 
             var Module =
@@ -404,6 +728,7 @@
                 );
 
                 return;
+
             }
 
 
@@ -413,10 +738,17 @@
             );
 
 
+            /*
+             * Module keys
+             */
+
             try {
 
                 var moduleKeys =
-                    Object.keys(Module);
+                    Object.keys(
+                        Module
+                    );
+
 
                 achievementDebugLog(
                     "Module tiene " +
@@ -424,9 +756,11 @@
                     " propiedades."
                 );
 
+
                 achievementDebugLog(
                     moduleKeys.join(", ")
                 );
+
 
             } catch (error) {
 
@@ -440,15 +774,132 @@
 
 
             /*
-             * HEAP
+             * -----------------------------------------------------
+             * MODULE FUNCTIONS
+             * -----------------------------------------------------
              */
 
             achievementDebugLog(
-                "Module.HEAPU8: " +
+                ""
+            );
+
+            achievementDebugLog(
+                "------ MODULE FUNCTIONS ------"
+            );
+
+
+            try {
+
+                var moduleFunctions =
+                    Object.keys(
+                        Module
+                    ).filter(
+                        function (key) {
+
+                            return (
+                                typeof
+                                Module[key] ===
+                                "function"
+                            );
+
+                        }
+                    );
+
+
+                achievementDebugLog(
+                    "Funciones exportadas:"
+                );
+
+
+                achievementDebugLog(
+                    moduleFunctions.length
+                        ? moduleFunctions.join(", ")
+                        : "(ninguna)"
+                );
+
+
+            } catch (error) {
+
+                achievementDebugLog(
+                    "Error buscando funciones Module: " +
+                    error,
+                    "err"
+                );
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * HEAP
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ HEAP ------"
+            );
+
+
+            achievementDebugLog(
+                "HEAP8: " +
+                (
+                    Module.HEAP8
+                        ? "OK"
+                        : "NO"
+                )
+            );
+
+
+            achievementDebugLog(
+                "HEAP16: " +
+                (
+                    Module.HEAP16
+                        ? "OK"
+                        : "NO"
+                )
+            );
+
+
+            achievementDebugLog(
+                "HEAPU8: " +
                 (
                     Module.HEAPU8
-                        ? "EXISTE"
-                        : "NO EXISTE"
+                        ? "OK"
+                        : "NO"
+                )
+            );
+
+
+            achievementDebugLog(
+                "HEAPU16: " +
+                (
+                    Module.HEAPU16
+                        ? "OK"
+                        : "NO"
+                )
+            );
+
+
+            achievementDebugLog(
+                "HEAP32: " +
+                (
+                    Module.HEAP32
+                        ? "OK"
+                        : "NO"
+                )
+            );
+
+
+            achievementDebugLog(
+                "HEAPU32: " +
+                (
+                    Module.HEAPU32
+                        ? "OK"
+                        : "NO"
                 )
             );
 
@@ -464,71 +915,108 @@
 
 
             /*
-             * Buscar retro/memory/wasm.
+             * -----------------------------------------------------
+             * ASM
+             * -----------------------------------------------------
              */
 
-            try {
+            achievementDebugLog(
+                ""
+            );
 
-                var interesting =
-                    Object.keys(Module)
-                        .filter(
-                            function (key) {
+            achievementDebugLog(
+                "------ MODULE.ASM ------"
+            );
 
-                                var lower =
-                                    key.toLowerCase();
 
-                                return (
-                                    lower.indexOf("retro") !== -1 ||
-                                    lower.indexOf("memory") !== -1 ||
-                                    lower.indexOf("wasm") !== -1 ||
-                                    lower.indexOf("core") !== -1
-                                );
-
-                            }
-                        );
-
+            if (Module.asm) {
 
                 achievementDebugLog(
-                    "Propiedades relacionadas:"
+                    "Module.asm: OK",
+                    "ok"
                 );
 
-                achievementDebugLog(
-                    interesting.length
-                        ? interesting.join(", ")
-                        : "(ninguna)"
-                );
 
-            } catch (error) {
+                try {
+
+                    achievementDebugLog(
+                        Object.keys(
+                            Module.asm
+                        ).join(", ")
+                    );
+
+
+                } catch (error) {
+
+                    achievementDebugLog(
+                        "Error leyendo Module.asm: " +
+                        error,
+                        "err"
+                    );
+
+                }
+
+            } else {
 
                 achievementDebugLog(
-                    "Error buscando propiedades: " +
-                    error,
-                    "err"
+                    "Module.asm no existe."
                 );
 
             }
 
 
             /*
-             * Funciones que nos interesan.
+             * -----------------------------------------------------
+             * FUNCIONES DE MEMORIA / LIBRETRO
+             * -----------------------------------------------------
              */
 
-            var functions = [
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ MEMORY / LIBRETRO ------"
+            );
+
+
+            var memoryNames = [
+
                 "_retro_get_memory_data",
+
                 "_retro_get_memory_size",
+
                 "retro_get_memory_data",
-                "retro_get_memory_size"
+
+                "retro_get_memory_size",
+
+                "_retro_load_game",
+
+                "_retro_run",
+
+                "_retro_reset",
+
+                "_retro_get_system_info",
+
+                "_retro_get_system_av_info",
+
+                "_retro_set_environment",
+
+                "_retro_init",
+
+                "_retro_deinit"
+
             ];
 
 
             for (
                 var i = 0;
-                i < functions.length;
+                i < memoryNames.length;
                 i++
             ) {
 
                 var name =
-                    functions[i];
+                    memoryNames[i];
 
 
                 if (
@@ -554,17 +1042,305 @@
             }
 
 
+            /*
+             * -----------------------------------------------------
+             * BÚSQUEDA GENERAL
+             * -----------------------------------------------------
+             */
+
             achievementDebugLog(
-                "========== FIN =========="
+                ""
+            );
+
+            achievementDebugLog(
+                "------ BÚSQUEDA GENERAL ------"
+            );
+
+
+            try {
+
+                var interesting =
+                    Object.keys(
+                        Module
+                    ).filter(
+                        function (key) {
+
+                            var lower =
+                                key.toLowerCase();
+
+
+                            return (
+
+                                lower.indexOf(
+                                    "retro"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "memory"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "ram"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "wasm"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "core"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "save"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "state"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "cheat"
+                                ) !== -1
+
+                                ||
+
+                                lower.indexOf(
+                                    "variable"
+                                ) !== -1
+
+                            );
+
+                        }
+                    );
+
+
+                achievementDebugLog(
+                    interesting.length
+                        ? interesting.join(", ")
+                        : "(ninguna)"
+                );
+
+
+            } catch (error) {
+
+                achievementDebugLog(
+                    "Error en búsqueda: " +
+                    error,
+                    "err"
+                );
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * FUNCIONES ESPECIALES CONOCIDAS
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "------ FUNCIONES EJS CONOCIDAS ------"
+            );
+
+
+            var knownFunctions = [
+
+                "_ejs_set_variable",
+
+                "_get_core_options",
+
+                "_get_current_frame_count",
+
+                "_cmd_take_screenshot",
+
+                "_system_restart",
+
+                "_load_state",
+
+                "_cmd_save_state",
+
+                "_cmd_savefiles",
+
+                "_set_cheat",
+
+                "_reset_cheat",
+
+                "_simulate_input",
+
+                "_malloc"
+
+            ];
+
+
+            for (
+                var j = 0;
+                j < knownFunctions.length;
+                j++
+            ) {
+
+                var known =
+                    knownFunctions[j];
+
+
+                if (
+                    typeof Module[known] ===
+                    "function"
+                ) {
+
+                    achievementDebugLog(
+                        "OK: " +
+                        known,
+                        "ok"
+                    );
+
+                } else {
+
+                    achievementDebugLog(
+                        "NO: " +
+                        known
+                    );
+
+                }
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * FINAL
+             * -----------------------------------------------------
+             */
+
+            achievementDebugLog(
+                ""
+            );
+
+            achievementDebugLog(
+                "========================================"
+            );
+
+            achievementDebugLog(
+                "FIN DE INSPECCIÓN"
+            );
+
+            achievementDebugLog(
+                "========================================"
             );
 
         }
+
+
+        /*
+         * =========================================================
+         * ESPERAR A EMULATORJS
+         * =========================================================
+         */
+
+        var achievementDebugStarted =
+            false;
+
+
+        var achievementDebugWatcher =
+            setInterval(
+                function () {
+
+                    if (
+                        achievementDebugStarted
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        !window.EJS_emulator
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    achievementDebugStarted =
+                        true;
+
+
+                    achievementDebugLog(
+                        "EJS_emulator detectado.",
+                        "ok"
+                    );
+
+
+                    try {
+
+                        window.EJS_emulator.on(
+                            "start",
+                            function () {
+
+                                achievementDebugLog(
+                                    "EVENTO: start",
+                                    "ok"
+                                );
+
+
+                                achievementDebugInspect();
+
+                            }
+                        );
+
+
+                        achievementDebugLog(
+                            "Listener 'start' registrado.",
+                            "ok"
+                        );
+
+
+                    } catch (error) {
+
+                        achievementDebugLog(
+                            "Error registrando evento start: " +
+                            error,
+                            "err"
+                        );
+
+                    }
+
+                },
+                250
+            );
+
     </script>
 
 
-    <!-- EmulatorJS -->
+    <!-- ========================================================= -->
+    <!-- EMULATORJS                                                 -->
+    <!-- ========================================================= -->
 
-    <script src="emulatorjs/data/loader.js"></script>
+    <script
+        src="emulatorjs/data/loader.js"
+    ></script>
+
 
 </body>
+
 </html>
