@@ -1,11 +1,4 @@
-## Hi there 👋
-a
-a
-a
-a
-a
-a
-a
+https://adamfrostvk.github.io/AdamFrostVK/
 <!--
 **adamfrostvk/AdamFrostVK** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
