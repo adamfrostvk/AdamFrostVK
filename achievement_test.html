@@ -12,14 +12,18 @@
             margin: 0;
             padding: 0;
             background: #111;
-            color: #fff;
-            font-family: monospace;
+            color: white;
         }
 
-        #game {
+        #game-container {
             width: 512px;
             height: 448px;
             max-width: 100%;
+        }
+
+        #game {
+            width: 100%;
+            height: 100%;
         }
 
         #debug {
@@ -28,40 +32,47 @@
             right: 0;
             bottom: 0;
 
-            height: 35vh;
+            height: 300px;
 
             background: #050505;
-            border-top: 2px solid #2680EF;
+            color: #ddd;
 
-            overflow-y: auto;
+            border-top: 3px solid #2680EF;
+
+            z-index: 999999;
+
+            overflow: auto;
 
             padding: 10px;
 
-            white-space: pre-wrap;
-            word-break: break-word;
-
+            font-family: monospace;
             font-size: 13px;
+
+            white-space: pre-wrap;
         }
 
-        #debug-header {
+        #debug-buttons {
             position: sticky;
             top: 0;
 
             background: #050505;
 
-            border-bottom: 1px solid #333;
-
             padding-bottom: 8px;
+
             margin-bottom: 8px;
+
+            border-bottom: 1px solid #333;
         }
 
         button {
             background: #222;
-            color: #fff;
+            color: white;
 
             border: 1px solid #555;
 
             padding: 6px 12px;
+
+            margin-right: 5px;
 
             cursor: pointer;
 
@@ -72,19 +83,15 @@
             background: #333;
         }
 
-        .info {
-            color: #ccc;
-        }
-
-        .success {
+        .ok {
             color: #4ade80;
         }
 
-        .warning {
+        .warn {
             color: #facc15;
         }
 
-        .error {
+        .err {
             color: #f87171;
         }
     </style>
@@ -92,17 +99,38 @@
 
 <body>
 
-    <div id="game"></div>
+    <!-- EXACTAMENTE como megamanx.html -->
+
+    <div id="game-container">
+        <div id="game"></div>
+    </div>
+
+
+    <!-- Configuración EXACTA de megamanx.html -->
+
+    <script>
+        EJS_player = "#game";
+        EJS_core = "snes";
+        EJS_gameName = "Mega Man X";
+        EJS_AdUrl = "img/mmxad.png";
+        EJS_AdSize = ["260px", "180px"];
+        EJS_color = "#2680EF";
+        EJS_pathtodata = "emulatorjs/data/";
+        EJS_gameUrl = "roms/Mega Man X.sfc";
+    </script>
+
+
+    <!-- Debug independiente -->
 
     <div id="debug">
 
-        <div id="debug-header">
-            <button onclick="clearDebug()">
-                Limpiar
+        <div id="debug-buttons">
+            <button onclick="achievementDebugInspect()">
+                INSPECCIONAR
             </button>
 
-            <button onclick="inspect()">
-                Inspeccionar
+            <button onclick="achievementDebugClear()">
+                LIMPIAR
             </button>
         </div>
 
@@ -111,58 +139,44 @@
     </div>
 
 
-    <!-- ========================================================= -->
-    <!-- CONFIGURACIÓN EXACTA DE megamanx.html                     -->
-    <!-- ========================================================= -->
-
     <script>
+        /*
+         * IMPORTANTE:
+         * Usamos nombres muy específicos para evitar
+         * conflictos con variables internas de EmulatorJS.
+         */
 
-        EJS_player = "#game";
-
-        EJS_core = "snes";
-
-        EJS_gameName = "Mega Man X";
-
-        EJS_AdUrl = "img/mmxad.png";
-
-        EJS_AdSize = ["260px", "180px"];
-
-        EJS_color = "#2680EF";
-
-        EJS_pathtodata = "emulatorjs/data/";
-
-        EJS_gameUrl = "roms/Mega Man X.sfc";
-
-    </script>
-
-
-    <!-- ========================================================= -->
-    <!-- DEBUG                                                      -->
-    <!-- ========================================================= -->
-
-    <script>
-
-        const output =
+        var achievementDebugOutput =
             document.getElementById("debug-output");
 
 
-        function debug(message, type = "info") {
+        function achievementDebugLog(message, type) {
 
-            const line =
+            var line =
                 document.createElement("div");
 
-            line.className = type;
+            if (type === "ok") {
+                line.className = "ok";
+            }
 
-            const time =
-                new Date().toLocaleTimeString();
+            if (type === "warn") {
+                line.className = "warn";
+            }
+
+            if (type === "err") {
+                line.className = "err";
+            }
 
             line.textContent =
-                "[" + time + "] " + message;
+                "[" +
+                new Date().toLocaleTimeString() +
+                "] " +
+                String(message);
 
-            output.appendChild(line);
+            achievementDebugOutput.appendChild(line);
 
-            output.scrollTop =
-                output.scrollHeight;
+            achievementDebugOutput.scrollTop =
+                achievementDebugOutput.scrollHeight;
 
             console.log(
                 "[AchievementDebug]",
@@ -171,110 +185,200 @@
         }
 
 
-        function clearDebug() {
+        function achievementDebugClear() {
 
-            output.innerHTML = "";
+            achievementDebugOutput.innerHTML = "";
 
         }
 
 
-        function inspect() {
+        /*
+         * Capturar errores JavaScript.
+         */
 
-            debug("================================");
-            debug("INSPECCIÓN");
-            debug("================================");
+        window.addEventListener(
+            "error",
+            function (event) {
+
+                achievementDebugLog(
+                    "ERROR: " +
+                    event.message +
+                    " (" +
+                    event.filename +
+                    ":" +
+                    event.lineno +
+                    ")",
+                    "err"
+                );
+
+            }
+        );
 
 
-            /*
-             * EJS_emulator
-             */
+        window.addEventListener(
+            "unhandledrejection",
+            function (event) {
 
-            if (!window.EJS_emulator) {
+                achievementDebugLog(
+                    "PROMISE ERROR: " +
+                    String(event.reason),
+                    "err"
+                );
 
-                debug(
-                    "EJS_emulator NO existe",
-                    "warning"
+            }
+        );
+
+
+        achievementDebugLog(
+            "Página de diagnóstico cargada.",
+            "ok"
+        );
+
+
+        achievementDebugLog(
+            "Cargando EmulatorJS..."
+        );
+
+
+        /*
+         * Comprobar EJS_emulator.
+         *
+         * loader.js crea esta variable cuando termina
+         * de cargar EmulatorJS.
+         */
+
+        var achievementDebugWatcher =
+            setInterval(
+                function () {
+
+                    if (!window.EJS_emulator) {
+                        return;
+                    }
+
+                    clearInterval(
+                        achievementDebugWatcher
+                    );
+
+                    achievementDebugLog(
+                        "EJS_emulator encontrado.",
+                        "ok"
+                    );
+
+                    achievementDebugLog(
+                        "EmulatorJS está disponible."
+                    );
+
+                    try {
+
+                        window.EJS_emulator.on(
+                            "start",
+                            function () {
+
+                                achievementDebugLog(
+                                    "EVENTO: start",
+                                    "ok"
+                                );
+
+                                achievementDebugInspect();
+
+                            }
+                        );
+
+                        achievementDebugLog(
+                            "Listener 'start' registrado.",
+                            "ok"
+                        );
+
+                    } catch (error) {
+
+                        achievementDebugLog(
+                            "Error registrando start: " +
+                            error,
+                            "err"
+                        );
+
+                    }
+
+                },
+                250
+            );
+
+
+        /*
+         * Inspección manual.
+         */
+
+        function achievementDebugInspect() {
+
+            achievementDebugLog(
+                "========== INSPECCIÓN =========="
+            );
+
+
+            var emulator =
+                window.EJS_emulator;
+
+
+            if (!emulator) {
+
+                achievementDebugLog(
+                    "EJS_emulator NO existe.",
+                    "warn"
                 );
 
                 return;
             }
 
 
-            debug(
-                "EJS_emulator encontrado",
-                "success"
+            achievementDebugLog(
+                "EJS_emulator: OK",
+                "ok"
             );
-
-
-            const emulator =
-                window.EJS_emulator;
-
-
-            /*
-             * Propiedades
-             */
-
-            try {
-
-                debug(
-                    "Emulator properties:"
-                );
-
-                debug(
-                    Object.keys(emulator)
-                );
-
-            } catch (e) {
-
-                debug(
-                    "Error leyendo Emulator: " + e,
-                    "error"
-                );
-
-            }
 
 
             /*
              * GameManager
              */
 
-            const gm =
+            var gameManager =
                 emulator.gameManager;
 
 
-            if (!gm) {
+            if (!gameManager) {
 
-                debug(
-                    "gameManager NO existe",
-                    "warning"
+                achievementDebugLog(
+                    "gameManager NO existe.",
+                    "warn"
                 );
 
-                return;
-            }
+            } else {
 
-
-            debug(
-                "gameManager encontrado",
-                "success"
-            );
-
-
-            try {
-
-                debug(
-                    "GameManager properties:"
+                achievementDebugLog(
+                    "gameManager: OK",
+                    "ok"
                 );
 
-                debug(
-                    Object.keys(gm)
-                );
 
-            } catch (e) {
+                try {
 
-                debug(
-                    "Error leyendo GameManager: " + e,
-                    "error"
-                );
+                    achievementDebugLog(
+                        "GameManager keys:"
+                    );
+
+                    achievementDebugLog(
+                        Object.keys(gameManager)
+                            .join(", ")
+                    );
+
+                } catch (error) {
+
+                    achievementDebugLog(
+                        "No se pudieron leer las propiedades de GameManager: " +
+                        error,
+                        "err"
+                    );
+
+                }
 
             }
 
@@ -283,51 +387,53 @@
              * Module
              */
 
-            const Module =
-                gm.Module;
+            if (!gameManager) {
+                return;
+            }
+
+
+            var Module =
+                gameManager.Module;
 
 
             if (!Module) {
 
-                debug(
-                    "Module NO existe",
-                    "warning"
+                achievementDebugLog(
+                    "gameManager.Module NO existe.",
+                    "warn"
                 );
 
                 return;
             }
 
 
-            debug(
-                "Module encontrado",
-                "success"
+            achievementDebugLog(
+                "Module: OK",
+                "ok"
             );
 
 
-            /*
-             * Module properties
-             */
-
             try {
 
-                const keys =
+                var moduleKeys =
                     Object.keys(Module);
 
-                debug(
+                achievementDebugLog(
                     "Module tiene " +
-                    keys.length +
-                    " propiedades"
+                    moduleKeys.length +
+                    " propiedades."
                 );
 
-                debug(
-                    keys
+                achievementDebugLog(
+                    moduleKeys.join(", ")
                 );
 
-            } catch (e) {
+            } catch (error) {
 
-                debug(
-                    "Error leyendo Module: " + e,
-                    "error"
+                achievementDebugLog(
+                    "Error leyendo Module: " +
+                    error,
+                    "err"
                 );
 
             }
@@ -337,14 +443,19 @@
              * HEAP
              */
 
-            debug(
-                "HEAPU8: " +
-                (Module.HEAPU8 ? "SI" : "NO")
+            achievementDebugLog(
+                "Module.HEAPU8: " +
+                (
+                    Module.HEAPU8
+                        ? "EXISTE"
+                        : "NO EXISTE"
+                )
             );
+
 
             if (Module.HEAPU8) {
 
-                debug(
+                achievementDebugLog(
                     "HEAPU8.length = " +
                     Module.HEAPU8.length
                 );
@@ -353,103 +464,88 @@
 
 
             /*
-             * asm
+             * Buscar retro/memory/wasm.
              */
 
-            debug(
-                "Module.asm: " +
-                (Module.asm ? "SI" : "NO")
-            );
+            try {
+
+                var interesting =
+                    Object.keys(Module)
+                        .filter(
+                            function (key) {
+
+                                var lower =
+                                    key.toLowerCase();
+
+                                return (
+                                    lower.indexOf("retro") !== -1 ||
+                                    lower.indexOf("memory") !== -1 ||
+                                    lower.indexOf("wasm") !== -1 ||
+                                    lower.indexOf("core") !== -1
+                                );
+
+                            }
+                        );
 
 
-            if (Module.asm) {
+                achievementDebugLog(
+                    "Propiedades relacionadas:"
+                );
 
-                try {
+                achievementDebugLog(
+                    interesting.length
+                        ? interesting.join(", ")
+                        : "(ninguna)"
+                );
 
-                    debug(
-                        "Module.asm properties:"
-                    );
+            } catch (error) {
 
-                    debug(
-                        Object.keys(Module.asm)
-                    );
-
-                } catch (e) {
-
-                    debug(
-                        "Error leyendo Module.asm: " +
-                        e,
-                        "error"
-                    );
-
-                }
+                achievementDebugLog(
+                    "Error buscando propiedades: " +
+                    error,
+                    "err"
+                );
 
             }
 
 
             /*
-             * Buscar funciones relacionadas
+             * Funciones que nos interesan.
              */
 
-            const search =
-                Object.keys(Module).filter(
-                    key => {
-
-                        const k =
-                            key.toLowerCase();
-
-                        return (
-                            k.includes("retro") ||
-                            k.includes("memory") ||
-                            k.includes("core") ||
-                            k.includes("wasm")
-                        );
-
-                    }
-                );
-
-
-            debug(
-                "Propiedades relacionadas:"
-            );
-
-            debug(search);
-
-
-            /*
-             * Funciones que nos interesan
-             */
-
-            const functions = [
-
+            var functions = [
                 "_retro_get_memory_data",
-
                 "_retro_get_memory_size",
-
                 "retro_get_memory_data",
-
                 "retro_get_memory_size"
-
             ];
 
 
-            for (const name of functions) {
+            for (
+                var i = 0;
+                i < functions.length;
+                i++
+            ) {
+
+                var name =
+                    functions[i];
+
 
                 if (
                     typeof Module[name] ===
                     "function"
                 ) {
 
-                    debug(
-                        "ENCONTRADO: " +
+                    achievementDebugLog(
+                        "ENCONTRADO: Module." +
                         name,
-                        "success"
+                        "ok"
                     );
 
                 } else {
 
-                    debug(
-                        "No encontrado: " +
+                    achievementDebugLog(
+                        "No existe: Module." +
                         name
                     );
 
@@ -457,150 +553,18 @@
 
             }
 
-        }
 
-
-        /*
-         * =========================================================
-         * ESPERAR A QUE EMULATORJS ESTÉ DISPONIBLE
-         * =========================================================
-         */
-
-        let started = false;
-
-
-        function waitForEmulator() {
-
-            if (started) {
-                return;
-            }
-
-
-            if (!window.EJS_emulator) {
-
-                return;
-            }
-
-
-            started = true;
-
-
-            debug(
-                "EJS_emulator detectado",
-                "success"
+            achievementDebugLog(
+                "========== FIN =========="
             );
 
-
-            /*
-             * Escuchar START
-             */
-
-            try {
-
-                window.EJS_emulator.on(
-                    "start",
-                    function () {
-
-                        debug(
-                            "Evento START recibido",
-                            "success"
-                        );
-
-                        inspect();
-
-                    }
-                );
-
-
-                debug(
-                    "Listener START registrado",
-                    "success"
-                );
-
-
-            } catch (e) {
-
-                debug(
-                    "Error registrando START: " +
-                    e,
-                    "error"
-                );
-
-            }
-
-
-            /*
-             * Escuchar READY
-             */
-
-            try {
-
-                window.EJS_emulator.on(
-                    "ready",
-                    function () {
-
-                        debug(
-                            "Evento READY recibido",
-                            "success"
-                        );
-
-                        inspect();
-
-                    }
-                );
-
-
-            } catch (e) {
-
-                debug(
-                    "Error registrando READY: " +
-                    e,
-                    "error"
-                );
-
-            }
-
-
-            /*
-             * Inspección inmediata
-             */
-
-            inspect();
-
         }
-
-
-        /*
-         * Comprobar cada 250ms.
-         *
-         * Esto es SOLO para el diagnóstico.
-         * No formará parte de achievement.js.
-         */
-
-        setInterval(
-            waitForEmulator,
-            250
-        );
-
-
-        debug(
-            "Debug iniciado",
-            "success"
-        );
-
-        debug(
-            "Esperando a EmulatorJS..."
-        );
-
     </script>
 
 
-    <!-- ========================================================= -->
-    <!-- EMULATORJS                                                 -->
-    <!-- ========================================================= -->
+    <!-- EmulatorJS -->
 
     <script src="emulatorjs/data/loader.js"></script>
-
 
 </body>
 </html>
