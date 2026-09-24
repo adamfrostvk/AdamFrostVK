@@ -4,45 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>EmulatorJS - Achievement Debug</title>
+    <title>Mega Man X - Achievement Debug</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         html,
         body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
             background: #111;
             color: #fff;
-            font-family: Arial, sans-serif;
+            font-family: monospace;
         }
 
         #game {
-            width: 100%;
-            height: 70vh;
+            width: 512px;
+            height: 448px;
+            max-width: 100%;
         }
 
         #debug {
-            width: 100%;
-            height: 30vh;
-            background: #050505;
-            border-top: 2px solid #333;
-            overflow-y: auto;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 13px;
-            line-height: 1.4;
-        }
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
 
-        .log {
+            height: 35vh;
+
+            background: #050505;
+            border-top: 2px solid #2680EF;
+
+            overflow-y: auto;
+
+            padding: 10px;
+
             white-space: pre-wrap;
             word-break: break-word;
-            margin-bottom: 4px;
+
+            font-size: 13px;
+        }
+
+        #debug-header {
+            position: sticky;
+            top: 0;
+
+            background: #050505;
+
+            border-bottom: 1px solid #333;
+
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            background: #222;
+            color: #fff;
+
+            border: 1px solid #555;
+
+            padding: 6px 12px;
+
+            cursor: pointer;
+
+            font-family: monospace;
+        }
+
+        button:hover {
+            background: #333;
         }
 
         .info {
@@ -60,578 +87,520 @@
         .error {
             color: #f87171;
         }
-
-        .command {
-            color: #60a5fa;
-        }
-
-        #debug-controls {
-            position: sticky;
-            top: 0;
-            background: #050505;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #333;
-        }
-
-        button {
-            background: #222;
-            color: white;
-            border: 1px solid #555;
-            padding: 6px 10px;
-            margin-right: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #333;
-        }
     </style>
 </head>
 
 <body>
 
-    <!-- EmulatorJS -->
     <div id="game"></div>
 
-    <!-- Consola -->
     <div id="debug">
-        <div id="debug-controls">
-            <button onclick="clearDebug()">Limpiar</button>
-            <button onclick="inspectEmulator()">Inspeccionar EmulatorJS</button>
-            <button onclick="inspectModule()">Inspeccionar Module</button>
+
+        <div id="debug-header">
+            <button onclick="clearDebug()">
+                Limpiar
+            </button>
+
+            <button onclick="inspect()">
+                Inspeccionar
+            </button>
         </div>
 
         <div id="debug-output"></div>
+
     </div>
 
+
+    <!-- ========================================================= -->
+    <!-- CONFIGURACIÓN EXACTA DE megamanx.html                     -->
+    <!-- ========================================================= -->
+
     <script>
-        /*
-         * ============================================================
-         * CONFIGURACIÓN DE EMULATORJS
-         * ============================================================
-         */
 
         EJS_player = "#game";
 
         EJS_core = "snes";
 
-        /*
-         * Pon aquí el ROM de prueba.
-         *
-         * Ejemplo:
-         *
-         * EJS_gameUrl = "roms/megamanx.sfc";
-         */
-        EJS_gameUrl = "roms/test.sfc";
+        EJS_gameName = "Mega Man X";
+
+        EJS_AdUrl = "img/mmxad.png";
+
+        EJS_AdSize = ["260px", "180px"];
+
+        EJS_color = "#2680EF";
 
         EJS_pathtodata = "emulatorjs/data/";
 
-        /*
-         * Opcional:
-         *
-         * Si tu instalación utiliza un BIOS:
-         *
-         * EJS_biosUrl = "...";
-         */
+        EJS_gameUrl = "roms/Mega Man X.sfc";
 
-        /*
-         * ============================================================
-         * CONSOLA DE DEBUG
-         * ============================================================
-         */
+    </script>
 
-        const debugOutput = document.getElementById("debug-output");
+
+    <!-- ========================================================= -->
+    <!-- DEBUG                                                      -->
+    <!-- ========================================================= -->
+
+    <script>
+
+        const output =
+            document.getElementById("debug-output");
+
 
         function debug(message, type = "info") {
-            const element = document.createElement("div");
 
-            element.className = "log " + type;
+            const line =
+                document.createElement("div");
 
-            if (typeof message === "object") {
-                try {
-                    element.textContent = JSON.stringify(
-                        message,
-                        null,
-                        2
-                    );
-                } catch (e) {
-                    element.textContent = String(message);
-                }
-            } else {
-                element.textContent = String(message);
-            }
+            line.className = type;
 
-            debugOutput.appendChild(element);
+            const time =
+                new Date().toLocaleTimeString();
 
-            debugOutput.scrollTop = debugOutput.scrollHeight;
+            line.textContent =
+                "[" + time + "] " + message;
 
-            // También consola normal del navegador
-            console.log("[AchievementDebug]", message);
+            output.appendChild(line);
+
+            output.scrollTop =
+                output.scrollHeight;
+
+            console.log(
+                "[AchievementDebug]",
+                message
+            );
         }
+
 
         function clearDebug() {
-            debugOutput.innerHTML = "";
+
+            output.innerHTML = "";
+
         }
 
-        /*
-         * Interceptamos console.log / warn / error para que
-         * también aparezcan en nuestra consola.
-         */
 
-        const originalConsoleLog = console.log;
-        const originalConsoleWarn = console.warn;
-        const originalConsoleError = console.error;
+        function inspect() {
 
-        console.log = function (...args) {
-            originalConsoleLog.apply(console, args);
+            debug("================================");
+            debug("INSPECCIÓN");
+            debug("================================");
 
-            debug(
-                args.map(formatValue).join(" "),
-                "info"
-            );
-        };
 
-        console.warn = function (...args) {
-            originalConsoleWarn.apply(console, args);
+            /*
+             * EJS_emulator
+             */
 
-            debug(
-                args.map(formatValue).join(" "),
-                "warning"
-            );
-        };
+            if (!window.EJS_emulator) {
 
-        console.error = function (...args) {
-            originalConsoleError.apply(console, args);
-
-            debug(
-                args.map(formatValue).join(" "),
-                "error"
-            );
-        };
-
-        function formatValue(value) {
-            if (typeof value === "string") {
-                return value;
-            }
-
-            if (value === null) {
-                return "null";
-            }
-
-            if (value === undefined) {
-                return "undefined";
-            }
-
-            if (typeof value === "object") {
-                try {
-                    return JSON.stringify(value);
-                } catch (e) {
-                    return String(value);
-                }
-            }
-
-            return String(value);
-        }
-
-        /*
-         * ============================================================
-         * INSPECCIÓN DE EMULATORJS
-         * ============================================================
-         */
-
-        function inspectEmulator() {
-            debug("========================================");
-            debug("INSPECCIONANDO EMULATORJS");
-            debug("========================================");
-
-            const emulator = window.EJS_emulator;
-
-            if (!emulator) {
                 debug(
-                    "EJS_emulator todavía no existe.",
+                    "EJS_emulator NO existe",
                     "warning"
                 );
 
                 return;
             }
 
+
             debug(
-                "window.EJS_emulator encontrado.",
+                "EJS_emulator encontrado",
                 "success"
             );
 
-            debug(
-                "Tipo: " + typeof emulator
-            );
 
-            debug(
-                "Propiedades:"
-            );
+            const emulator =
+                window.EJS_emulator;
+
+
+            /*
+             * Propiedades
+             */
 
             try {
+
+                debug(
+                    "Emulator properties:"
+                );
+
                 debug(
                     Object.keys(emulator)
                 );
+
             } catch (e) {
+
                 debug(
-                    "No se pudieron obtener las propiedades: " + e,
+                    "Error leyendo Emulator: " + e,
                     "error"
                 );
+
             }
 
-            const gameManager = emulator.gameManager;
 
-            if (!gameManager) {
+            /*
+             * GameManager
+             */
+
+            const gm =
+                emulator.gameManager;
+
+
+            if (!gm) {
+
                 debug(
-                    "gameManager todavía no existe.",
+                    "gameManager NO existe",
                     "warning"
                 );
 
                 return;
             }
 
+
             debug(
-                "gameManager encontrado.",
+                "gameManager encontrado",
                 "success"
             );
 
+
             try {
+
                 debug(
                     "GameManager properties:"
                 );
 
                 debug(
-                    Object.keys(gameManager)
+                    Object.keys(gm)
                 );
+
             } catch (e) {
+
                 debug(
-                    "Error inspeccionando GameManager: " + e,
+                    "Error leyendo GameManager: " + e,
                     "error"
                 );
+
             }
 
-            inspectModule();
-        }
 
-        /*
-         * ============================================================
-         * INSPECCIÓN DE MODULE
-         * ============================================================
-         */
+            /*
+             * Module
+             */
 
-        function inspectModule() {
-            debug("========================================");
-            debug("INSPECCIONANDO MODULE");
-            debug("========================================");
+            const Module =
+                gm.Module;
 
-            const emulator = window.EJS_emulator;
-
-            if (!emulator) {
-                debug(
-                    "EJS_emulator no está disponible.",
-                    "warning"
-                );
-
-                return;
-            }
-
-            const gameManager = emulator.gameManager;
-
-            if (!gameManager) {
-                debug(
-                    "gameManager no está disponible.",
-                    "warning"
-                );
-
-                return;
-            }
-
-            const Module = gameManager.Module;
 
             if (!Module) {
+
                 debug(
-                    "Module todavía no está disponible.",
+                    "Module NO existe",
                     "warning"
                 );
 
                 return;
             }
 
+
             debug(
-                "Module encontrado.",
+                "Module encontrado",
                 "success"
             );
 
+
             /*
-             * Propiedades principales
+             * Module properties
              */
 
-            const keys = Object.keys(Module);
+            try {
 
-            debug(
-                "Número de propiedades: " + keys.length
-            );
+                const keys =
+                    Object.keys(Module);
 
-            debug(
-                "Propiedades de Module:"
-            );
+                debug(
+                    "Module tiene " +
+                    keys.length +
+                    " propiedades"
+                );
 
-            debug(keys);
+                debug(
+                    keys
+                );
+
+            } catch (e) {
+
+                debug(
+                    "Error leyendo Module: " + e,
+                    "error"
+                );
+
+            }
+
 
             /*
              * HEAP
              */
-
-            debug("------ HEAP ------");
-
-            debug(
-                "HEAP8: " +
-                (Module.HEAP8 ? "SI" : "NO")
-            );
 
             debug(
                 "HEAPU8: " +
                 (Module.HEAPU8 ? "SI" : "NO")
             );
 
-            debug(
-                "HEAP16: " +
-                (Module.HEAP16 ? "SI" : "NO")
-            );
-
-            debug(
-                "HEAPU16: " +
-                (Module.HEAPU16 ? "SI" : "NO")
-            );
-
-            debug(
-                "HEAP32: " +
-                (Module.HEAP32 ? "SI" : "NO")
-            );
-
-            debug(
-                "HEAPU32: " +
-                (Module.HEAPU32 ? "SI" : "NO")
-            );
-
-            debug(
-                "HEAPF32: " +
-                (Module.HEAPF32 ? "SI" : "NO")
-            );
-
-            debug(
-                "HEAPF64: " +
-                (Module.HEAPF64 ? "SI" : "NO")
-            );
-
             if (Module.HEAPU8) {
+
                 debug(
                     "HEAPU8.length = " +
                     Module.HEAPU8.length
                 );
+
             }
 
+
             /*
-             * ASM
+             * asm
              */
 
-            debug("------ ASM / WASM ------");
+            debug(
+                "Module.asm: " +
+                (Module.asm ? "SI" : "NO")
+            );
+
 
             if (Module.asm) {
-                debug(
-                    "Module.asm existe.",
-                    "success"
-                );
 
                 try {
+
                     debug(
-                        "asm properties:"
+                        "Module.asm properties:"
                     );
 
                     debug(
                         Object.keys(Module.asm)
                     );
+
                 } catch (e) {
+
                     debug(
-                        "No se pudo inspeccionar Module.asm: " + e,
+                        "Error leyendo Module.asm: " +
+                        e,
                         "error"
                     );
+
                 }
-            } else {
-                debug(
-                    "Module.asm no está disponible."
-                );
+
             }
 
-            /*
-             * Buscar funciones relacionadas con memoria/libretro
-             */
-
-            debug("------ FUNCIONES RELEVANTES ------");
-
-            const searchTerms = [
-                "retro",
-                "memory",
-                "get_memory",
-                "system",
-                "core"
-            ];
-
-            const relevant = keys.filter(key => {
-                const lower = key.toLowerCase();
-
-                return searchTerms.some(
-                    term => lower.includes(term)
-                );
-            });
-
-            if (relevant.length > 0) {
-                debug(
-                    "Funciones/propiedades potencialmente relevantes:"
-                );
-
-                debug(relevant);
-
-            } else {
-                debug(
-                    "No se encontraron propiedades relevantes directamente en Module.",
-                    "warning"
-                );
-            }
 
             /*
-             * Buscar específicamente las funciones que nos interesan.
+             * Buscar funciones relacionadas
              */
 
-            const names = [
+            const search =
+                Object.keys(Module).filter(
+                    key => {
+
+                        const k =
+                            key.toLowerCase();
+
+                        return (
+                            k.includes("retro") ||
+                            k.includes("memory") ||
+                            k.includes("core") ||
+                            k.includes("wasm")
+                        );
+
+                    }
+                );
+
+
+            debug(
+                "Propiedades relacionadas:"
+            );
+
+            debug(search);
+
+
+            /*
+             * Funciones que nos interesan
+             */
+
+            const functions = [
+
                 "_retro_get_memory_data",
+
                 "_retro_get_memory_size",
+
                 "retro_get_memory_data",
+
                 "retro_get_memory_size"
+
             ];
 
-            for (const name of names) {
-                if (typeof Module[name] === "function") {
+
+            for (const name of functions) {
+
+                if (
+                    typeof Module[name] ===
+                    "function"
+                ) {
+
                     debug(
-                        "ENCONTRADO: Module." + name,
+                        "ENCONTRADO: " +
+                        name,
                         "success"
                     );
+
                 } else {
+
                     debug(
-                        "No existe: Module." + name
+                        "No encontrado: " +
+                        name
                     );
+
                 }
+
             }
+
         }
 
+
         /*
-         * ============================================================
-         * ESPERAR A EMULATORJS
-         * ============================================================
+         * =========================================================
+         * ESPERAR A QUE EMULATORJS ESTÉ DISPONIBLE
+         * =========================================================
          */
 
-        let achievementDebugStarted = false;
+        let started = false;
+
 
         function waitForEmulator() {
 
-            if (achievementDebugStarted) {
+            if (started) {
                 return;
             }
+
 
             if (!window.EJS_emulator) {
+
                 return;
             }
 
-            achievementDebugStarted = true;
+
+            started = true;
+
 
             debug(
-                "EJS_emulator detectado.",
+                "EJS_emulator detectado",
                 "success"
             );
 
+
             /*
-             * Escuchar eventos de EmulatorJS
+             * Escuchar START
              */
 
             try {
-                window.EJS_emulator.on(
-                    "ready",
-                    function () {
-                        debug(
-                            "Evento EmulatorJS: READY",
-                            "success"
-                        );
-
-                        inspectEmulator();
-                    }
-                );
 
                 window.EJS_emulator.on(
                     "start",
                     function () {
+
                         debug(
-                            "Evento EmulatorJS: START",
+                            "Evento START recibido",
                             "success"
                         );
 
-                        inspectEmulator();
+                        inspect();
+
                     }
                 );
 
+
                 debug(
-                    "Listeners de EmulatorJS registrados.",
+                    "Listener START registrado",
                     "success"
                 );
 
-            } catch (error) {
+
+            } catch (e) {
 
                 debug(
-                    "Error registrando eventos: " +
-                    error,
+                    "Error registrando START: " +
+                    e,
                     "error"
                 );
+
             }
 
+
             /*
-             * Inspección inicial
+             * Escuchar READY
              */
 
-            inspectEmulator();
+            try {
+
+                window.EJS_emulator.on(
+                    "ready",
+                    function () {
+
+                        debug(
+                            "Evento READY recibido",
+                            "success"
+                        );
+
+                        inspect();
+
+                    }
+                );
+
+
+            } catch (e) {
+
+                debug(
+                    "Error registrando READY: " +
+                    e,
+                    "error"
+                );
+
+            }
+
+
+            /*
+             * Inspección inmediata
+             */
+
+            inspect();
+
         }
 
+
         /*
-         * Revisar periódicamente hasta que EmulatorJS
-         * esté disponible.
+         * Comprobar cada 250ms.
+         *
+         * Esto es SOLO para el diagnóstico.
+         * No formará parte de achievement.js.
          */
 
-        const emulatorWatcher = setInterval(
+        setInterval(
             waitForEmulator,
             250
         );
 
-        /*
-         * ============================================================
-         * INICIO
-         * ============================================================
-         */
 
         debug(
-            "Achievement Debug iniciado.",
+            "Debug iniciado",
             "success"
         );
 
         debug(
             "Esperando a EmulatorJS..."
         );
+
     </script>
 
-    <!--
-        Cargar EmulatorJS DESPUÉS de definir la configuración.
-        Ajusta la ruta si achievement-test.html está en otro directorio.
-    -->
+
+    <!-- ========================================================= -->
+    <!-- EMULATORJS                                                 -->
+    <!-- ========================================================= -->
 
     <script src="emulatorjs/data/loader.js"></script>
+
 
 </body>
 </html>
