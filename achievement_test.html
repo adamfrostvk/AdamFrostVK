@@ -3,34 +3,25 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        Mega Man X - Achievement Debug
-    </title>
+    <title>EmulatorJS Achievement Memory Test</title>
 
     <style>
-
         html,
         body {
             margin: 0;
             padding: 0;
-
             background: #111;
             color: #fff;
-
             font-family: monospace;
         }
 
         #game-container {
             width: 512px;
             height: 448px;
-
             max-width: 100%;
+            margin-bottom: 380px;
         }
 
         #game {
@@ -39,9 +30,7 @@
         }
 
         #debug {
-
             position: fixed;
-
             left: 0;
             right: 0;
             bottom: 0;
@@ -49,7 +38,6 @@
             height: 360px;
 
             background: #050505;
-
             color: #ddd;
 
             border-top: 3px solid #2680EF;
@@ -61,26 +49,20 @@
             padding: 10px;
 
             font-family: monospace;
-
             font-size: 13px;
-
             line-height: 1.4;
 
             white-space: pre-wrap;
-
             word-break: break-word;
         }
 
         #debug-buttons {
-
             position: sticky;
-
             top: 0;
 
             background: #050505;
 
             padding-bottom: 8px;
-
             margin-bottom: 8px;
 
             border-bottom: 1px solid #333;
@@ -89,9 +71,7 @@
         }
 
         button {
-
             background: #222;
-
             color: white;
 
             border: 1px solid #555;
@@ -121,36 +101,26 @@
             color: #f87171;
         }
 
-        .title {
+        .info {
             color: #60a5fa;
-
-            font-weight: bold;
-
-            margin-top: 8px;
-            margin-bottom: 4px;
         }
-
     </style>
-
 </head>
 
 
 <body>
-
 
     <!-- ========================================================= -->
     <!-- EMULATOR                                                   -->
     <!-- ========================================================= -->
 
     <div id="game-container">
-
         <div id="game"></div>
-
     </div>
 
 
     <!-- ========================================================= -->
-    <!-- CONFIGURACIÓN EXACTA DE megamanx.html                      -->
+    <!-- EMULATORJS CONFIG                                          -->
     <!-- ========================================================= -->
 
     <script>
@@ -180,27 +150,26 @@
 
 
     <!-- ========================================================= -->
-    <!-- DEBUG                                                       -->
+    <!-- DEBUG UI                                                   -->
     <!-- ========================================================= -->
 
     <div id="debug">
 
         <div id="debug-buttons">
 
-            <button
-                onclick="achievementDebugInspect()"
-            >
+            <button onclick="achievementDebugInspect()">
                 INSPECCIONAR
             </button>
 
-            <button
-                onclick="achievementDebugClear()"
-            >
+            <button onclick="achievementDebugMemory()">
+                PROBAR MEMORIA
+            </button>
+
+            <button onclick="achievementDebugClear()">
                 LIMPIAR
             </button>
 
         </div>
-
 
         <div id="debug-output"></div>
 
@@ -211,23 +180,25 @@
 
         /*
          * =========================================================
-         * CONSOLA
+         * DEBUG
          * =========================================================
          */
 
-        var achievementDebugOutput =
+        var debugOutput =
             document.getElementById(
                 "debug-output"
             );
 
 
-        function achievementDebugLog(
+        function debugLog(
             message,
             type
         ) {
 
             var line =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             if (type === "ok") {
@@ -242,6 +213,10 @@
                 line.className = "err";
             }
 
+            if (type === "info") {
+                line.className = "info";
+            }
+
 
             line.textContent =
                 "[" +
@@ -250,13 +225,13 @@
                 String(message);
 
 
-            achievementDebugOutput.appendChild(
+            debugOutput.appendChild(
                 line
             );
 
 
-            achievementDebugOutput.scrollTop =
-                achievementDebugOutput.scrollHeight;
+            debugOutput.scrollTop =
+                debugOutput.scrollHeight;
 
 
             console.log(
@@ -269,7 +244,7 @@
 
         function achievementDebugClear() {
 
-            achievementDebugOutput.innerHTML = "";
+            debugOutput.innerHTML = "";
 
         }
 
@@ -284,14 +259,15 @@
             "error",
             function (event) {
 
-                achievementDebugLog(
+                debugLog(
                     "ERROR: " +
                     event.message +
-                    " (" +
+                    " @ " +
                     event.filename +
                     ":" +
                     event.lineno +
-                    ")",
+                    ":" +
+                    event.colno,
                     "err"
                 );
 
@@ -303,7 +279,7 @@
             "unhandledrejection",
             function (event) {
 
-                achievementDebugLog(
+                debugLog(
                     "PROMISE ERROR: " +
                     String(event.reason),
                     "err"
@@ -313,937 +289,328 @@
         );
 
 
-        achievementDebugLog(
+        debugLog(
             "========================================"
         );
 
-        achievementDebugLog(
-            "Achievement Debug iniciado.",
-            "ok"
+        debugLog(
+            "Achievement Memory Debug",
+            "info"
         );
 
-        achievementDebugLog(
+        debugLog(
             "Esperando a EmulatorJS..."
         );
 
 
         /*
          * =========================================================
-         * INSPECCIÓN PRINCIPAL
+         * OBTENER EMULADOR
+         * =========================================================
+         */
+
+        function getEmulator() {
+
+            if (
+                !window.EJS_emulator
+            ) {
+
+                debugLog(
+                    "EJS_emulator todavía no existe.",
+                    "warn"
+                );
+
+                return null;
+
+            }
+
+
+            return window.EJS_emulator;
+
+        }
+
+
+        function getGameManager() {
+
+            var emulator =
+                getEmulator();
+
+
+            if (!emulator) {
+                return null;
+            }
+
+
+            if (
+                !emulator.gameManager
+            ) {
+
+                debugLog(
+                    "gameManager todavía no existe.",
+                    "warn"
+                );
+
+                return null;
+
+            }
+
+
+            return emulator.gameManager;
+
+        }
+
+
+        function getModule() {
+
+            var gameManager =
+                getGameManager();
+
+
+            if (!gameManager) {
+                return null;
+            }
+
+
+            if (
+                !gameManager.Module
+            ) {
+
+                debugLog(
+                    "gameManager.Module no existe.",
+                    "warn"
+                );
+
+                return null;
+
+            }
+
+
+            return gameManager.Module;
+
+        }
+
+
+        /*
+         * =========================================================
+         * INSPECCIÓN BÁSICA
          * =========================================================
          */
 
         function achievementDebugInspect() {
 
-            achievementDebugLog(
-                ""
-            );
+            debugLog("");
 
-            achievementDebugLog(
+            debugLog(
                 "========================================"
             );
 
-            achievementDebugLog(
-                "INSPECCIÓN COMPLETA"
+            debugLog(
+                "INSPECCIÓN",
+                "info"
             );
 
-            achievementDebugLog(
+            debugLog(
                 "========================================"
-            );
-
-
-            /*
-             * -----------------------------------------------------
-             * EJS_emulator
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ EJS_EMULATOR ------"
             );
 
 
             var emulator =
-                window.EJS_emulator;
+                getEmulator();
 
 
             if (!emulator) {
-
-                achievementDebugLog(
-                    "window.EJS_emulator NO existe.",
-                    "warn"
-                );
-
                 return;
-
             }
 
 
-            achievementDebugLog(
-                "window.EJS_emulator: OK",
+            debugLog(
+                "EJS_emulator: OK",
                 "ok"
             );
 
 
-            try {
-
-                var emulatorKeys =
-                    Object.keys(emulator);
-
-
-                achievementDebugLog(
-                    "Propiedades:"
-                );
-
-
-                achievementDebugLog(
-                    emulatorKeys.join(", ")
-                );
-
-            } catch (error) {
-
-                achievementDebugLog(
-                    "Error leyendo EJS_emulator: " +
-                    error,
-                    "err"
-                );
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * GAMEMANAGER
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ GAMEMANAGER ------"
-            );
-
-
             var gameManager =
-                emulator.gameManager;
+                getGameManager();
 
 
             if (!gameManager) {
-
-                achievementDebugLog(
-                    "gameManager NO existe.",
-                    "warn"
-                );
-
-                achievementDebugLog(
-                    "Es posible que el core todavía no haya terminado de iniciar."
-                );
-
                 return;
-
             }
 
 
-            achievementDebugLog(
+            debugLog(
                 "gameManager: OK",
                 "ok"
             );
 
 
-            try {
-
-                achievementDebugLog(
-                    "Propiedades:"
-                );
-
-
-                achievementDebugLog(
-                    Object.keys(
-                        gameManager
-                    ).join(", ")
-                );
-
-            } catch (error) {
-
-                achievementDebugLog(
-                    "Error leyendo GameManager: " +
-                    error,
-                    "err"
-                );
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * GAMEMANAGER.EJS
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ GAMEMANAGER.EJS ------"
-            );
-
-
-            var ejs =
-                gameManager.EJS;
-
-
-            if (!ejs) {
-
-                achievementDebugLog(
-                    "gameManager.EJS NO existe.",
-                    "warn"
-                );
-
-            } else {
-
-                achievementDebugLog(
-                    "gameManager.EJS: OK",
-                    "ok"
-                );
-
-
-                try {
-
-                    var ejsKeys =
-                        Object.keys(ejs);
-
-
-                    achievementDebugLog(
-                        "Propiedades:"
-                    );
-
-
-                    achievementDebugLog(
-                        ejsKeys.join(", ")
-                    );
-
-
-                } catch (error) {
-
-                    achievementDebugLog(
-                        "Error leyendo EJS: " +
-                        error,
-                        "err"
-                    );
-
-                }
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * GAMEMANAGER.FUNCTIONS
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ GAMEMANAGER.FUNCTIONS ------"
-            );
-
-
-            var functions =
-                gameManager.functions;
-
-
-            if (!functions) {
-
-                achievementDebugLog(
-                    "gameManager.functions NO existe.",
-                    "warn"
-                );
-
-            } else {
-
-                achievementDebugLog(
-                    "gameManager.functions: OK",
-                    "ok"
-                );
-
-
-                try {
-
-                    var functionKeys =
-                        Object.keys(
-                            functions
-                        );
-
-
-                    achievementDebugLog(
-                        "Propiedades:"
-                    );
-
-
-                    achievementDebugLog(
-                        functionKeys.join(", ")
-                    );
-
-
-                    /*
-                     * Solo funciones
-                     */
-
-                    var callableFunctions =
-                        functionKeys.filter(
-                            function (key) {
-
-                                return (
-                                    typeof
-                                    functions[key] ===
-                                    "function"
-                                );
-
-                            }
-                        );
-
-
-                    achievementDebugLog(
-                        ""
-                    );
-
-                    achievementDebugLog(
-                        "Funciones:"
-                    );
-
-
-                    achievementDebugLog(
-                        callableFunctions.length
-                            ? callableFunctions.join(", ")
-                            : "(ninguna)"
-                    );
-
-
-                } catch (error) {
-
-                    achievementDebugLog(
-                        "Error leyendo functions: " +
-                        error,
-                        "err"
-                    );
-
-                }
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * GAMEMANAGER.FS
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ GAMEMANAGER.FS ------"
-            );
-
-
-            var fs =
-                gameManager.FS;
-
-
-            if (!fs) {
-
-                achievementDebugLog(
-                    "gameManager.FS NO existe.",
-                    "warn"
-                );
-
-            } else {
-
-                achievementDebugLog(
-                    "gameManager.FS: OK",
-                    "ok"
-                );
-
-
-                try {
-
-                    achievementDebugLog(
-                        "Propiedades:"
-                    );
-
-
-                    achievementDebugLog(
-                        Object.keys(fs).join(", ")
-                    );
-
-
-                } catch (error) {
-
-                    achievementDebugLog(
-                        "Error leyendo FS: " +
-                        error,
-                        "err"
-                    );
-
-                }
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * MODULE
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ MODULE ------"
-            );
-
-
             var Module =
-                gameManager.Module;
+                getModule();
 
 
             if (!Module) {
-
-                achievementDebugLog(
-                    "gameManager.Module NO existe.",
-                    "warn"
-                );
-
                 return;
-
             }
 
 
-            achievementDebugLog(
+            debugLog(
                 "Module: OK",
                 "ok"
             );
 
 
             /*
-             * Module keys
+             * cwrap
              */
 
-            try {
+            debugLog("");
 
-                var moduleKeys =
-                    Object.keys(
-                        Module
-                    );
+            debugLog(
+                "------ CWRAP ------"
+            );
 
 
-                achievementDebugLog(
-                    "Module tiene " +
-                    moduleKeys.length +
-                    " propiedades."
+            debugLog(
+                "typeof Module.cwrap = " +
+                typeof Module.cwrap
+            );
+
+
+            if (
+                typeof Module.cwrap ===
+                "function"
+            ) {
+
+                debugLog(
+                    "Module.cwrap disponible.",
+                    "ok"
                 );
 
+            } else {
 
-                achievementDebugLog(
-                    moduleKeys.join(", ")
-                );
-
-
-            } catch (error) {
-
-                achievementDebugLog(
-                    "Error leyendo Module: " +
-                    error,
+                debugLog(
+                    "Module.cwrap NO disponible.",
                     "err"
                 );
+
+                return;
 
             }
 
 
             /*
-             * -----------------------------------------------------
-             * MODULE FUNCTIONS
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ MODULE FUNCTIONS ------"
-            );
-
-
-            try {
-
-                var moduleFunctions =
-                    Object.keys(
-                        Module
-                    ).filter(
-                        function (key) {
-
-                            return (
-                                typeof
-                                Module[key] ===
-                                "function"
-                            );
-
-                        }
-                    );
-
-
-                achievementDebugLog(
-                    "Funciones exportadas:"
-                );
-
-
-                achievementDebugLog(
-                    moduleFunctions.length
-                        ? moduleFunctions.join(", ")
-                        : "(ninguna)"
-                );
-
-
-            } catch (error) {
-
-                achievementDebugLog(
-                    "Error buscando funciones Module: " +
-                    error,
-                    "err"
-                );
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
              * HEAP
-             * -----------------------------------------------------
              */
 
-            achievementDebugLog(
-                ""
-            );
+            debugLog("");
 
-            achievementDebugLog(
+            debugLog(
                 "------ HEAP ------"
             );
 
 
-            achievementDebugLog(
-                "HEAP8: " +
-                (
-                    Module.HEAP8
-                        ? "OK"
-                        : "NO"
-                )
-            );
-
-
-            achievementDebugLog(
-                "HEAP16: " +
-                (
-                    Module.HEAP16
-                        ? "OK"
-                        : "NO"
-                )
-            );
-
-
-            achievementDebugLog(
-                "HEAPU8: " +
-                (
-                    Module.HEAPU8
-                        ? "OK"
-                        : "NO"
-                )
-            );
-
-
-            achievementDebugLog(
-                "HEAPU16: " +
-                (
-                    Module.HEAPU16
-                        ? "OK"
-                        : "NO"
-                )
-            );
-
-
-            achievementDebugLog(
-                "HEAP32: " +
-                (
-                    Module.HEAP32
-                        ? "OK"
-                        : "NO"
-                )
-            );
-
-
-            achievementDebugLog(
-                "HEAPU32: " +
-                (
-                    Module.HEAPU32
-                        ? "OK"
-                        : "NO"
-                )
-            );
-
-
-            if (Module.HEAPU8) {
-
-                achievementDebugLog(
-                    "HEAPU8.length = " +
-                    Module.HEAPU8.length
-                );
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * ASM
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ MODULE.ASM ------"
-            );
-
-
-            if (Module.asm) {
-
-                achievementDebugLog(
-                    "Module.asm: OK",
-                    "ok"
-                );
-
-
-                try {
-
-                    achievementDebugLog(
-                        Object.keys(
-                            Module.asm
-                        ).join(", ")
-                    );
-
-
-                } catch (error) {
-
-                    achievementDebugLog(
-                        "Error leyendo Module.asm: " +
-                        error,
-                        "err"
-                    );
-
-                }
-
-            } else {
-
-                achievementDebugLog(
-                    "Module.asm no existe."
-                );
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * FUNCIONES DE MEMORIA / LIBRETRO
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ MEMORY / LIBRETRO ------"
-            );
-
-
-            var memoryNames = [
-
-                "_retro_get_memory_data",
-
-                "_retro_get_memory_size",
-
-                "retro_get_memory_data",
-
-                "retro_get_memory_size",
-
-                "_retro_load_game",
-
-                "_retro_run",
-
-                "_retro_reset",
-
-                "_retro_get_system_info",
-
-                "_retro_get_system_av_info",
-
-                "_retro_set_environment",
-
-                "_retro_init",
-
-                "_retro_deinit"
-
+            var heaps = [
+                "HEAP8",
+                "HEAP16",
+                "HEAPU8",
+                "HEAPU16",
+                "HEAP32",
+                "HEAPU32",
+                "HEAPF32",
+                "HEAPF64"
             ];
 
 
             for (
                 var i = 0;
-                i < memoryNames.length;
+                i < heaps.length;
                 i++
             ) {
 
-                var name =
-                    memoryNames[i];
+                var heapName =
+                    heaps[i];
+
+                var heap =
+                    Module[heapName];
 
 
-                if (
-                    typeof Module[name] ===
-                    "function"
-                ) {
-
-                    achievementDebugLog(
-                        "ENCONTRADO: Module." +
-                        name,
-                        "ok"
-                    );
-
-                } else {
-
-                    achievementDebugLog(
-                        "No existe: Module." +
-                        name
-                    );
-
-                }
-
-            }
-
-
-            /*
-             * -----------------------------------------------------
-             * BÚSQUEDA GENERAL
-             * -----------------------------------------------------
-             */
-
-            achievementDebugLog(
-                ""
-            );
-
-            achievementDebugLog(
-                "------ BÚSQUEDA GENERAL ------"
-            );
-
-
-            try {
-
-                var interesting =
-                    Object.keys(
-                        Module
-                    ).filter(
-                        function (key) {
-
-                            var lower =
-                                key.toLowerCase();
-
-
-                            return (
-
-                                lower.indexOf(
-                                    "retro"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "memory"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "ram"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "wasm"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "core"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "save"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "state"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "cheat"
-                                ) !== -1
-
-                                ||
-
-                                lower.indexOf(
-                                    "variable"
-                                ) !== -1
-
-                            );
-
-                        }
-                    );
-
-
-                achievementDebugLog(
-                    interesting.length
-                        ? interesting.join(", ")
-                        : "(ninguna)"
-                );
-
-
-            } catch (error) {
-
-                achievementDebugLog(
-                    "Error en búsqueda: " +
-                    error,
-                    "err"
+                debugLog(
+                    heapName +
+                    ": " +
+                    (
+                        heap
+                            ? "OK (" +
+                              heap.length +
+                              ")"
+                            : "NO"
+                    ),
+                    heap
+                        ? "ok"
+                        : "warn"
                 );
 
             }
 
 
             /*
-             * -----------------------------------------------------
-             * FUNCIONES ESPECIALES CONOCIDAS
-             * -----------------------------------------------------
+             * GameManager functions
              */
 
-            achievementDebugLog(
-                ""
+            debugLog("");
+
+            debugLog(
+                "------ GAMEMANAGER FUNCTIONS ------"
             );
 
-            achievementDebugLog(
-                "------ FUNCIONES EJS CONOCIDAS ------"
-            );
 
-
-            var knownFunctions = [
-
-                "_ejs_set_variable",
-
-                "_get_core_options",
-
-                "_get_current_frame_count",
-
-                "_cmd_take_screenshot",
-
-                "_system_restart",
-
-                "_load_state",
-
-                "_cmd_save_state",
-
-                "_cmd_savefiles",
-
-                "_set_cheat",
-
-                "_reset_cheat",
-
-                "_simulate_input",
-
-                "_malloc"
-
-            ];
-
-
-            for (
-                var j = 0;
-                j < knownFunctions.length;
-                j++
+            if (
+                gameManager.functions
             ) {
 
-                var known =
-                    knownFunctions[j];
-
-
-                if (
-                    typeof Module[known] ===
-                    "function"
-                ) {
-
-                    achievementDebugLog(
-                        "OK: " +
-                        known,
-                        "ok"
-                    );
-
-                } else {
-
-                    achievementDebugLog(
-                        "NO: " +
-                        known
-                    );
-
-                }
+                debugLog(
+                    Object.keys(
+                        gameManager.functions
+                    ).join(", ")
+                );
 
             }
 
 
             /*
-             * -----------------------------------------------------
-             * FINAL
-             * -----------------------------------------------------
+             * Funciones conocidas
              */
 
-            achievementDebugLog(
-                ""
+            debugLog("");
+
+            debugLog(
+                "------ FUNCIONES CONTROL ------"
             );
 
-            achievementDebugLog(
-                "========================================"
+
+            testCwrapFunction(
+                Module,
+                "ejs_set_variable",
+                "null",
+                [
+                    "string",
+                    "string"
+                ]
             );
 
-            achievementDebugLog(
-                "FIN DE INSPECCIÓN"
+
+            testCwrapFunction(
+                Module,
+                "get_current_frame_count",
+                "number",
+                []
             );
 
-            achievementDebugLog(
-                "========================================"
+
+            debugLog("");
+
+            debugLog(
+                "Inspección terminada.",
+                "ok"
             );
 
         }
@@ -1251,41 +618,603 @@
 
         /*
          * =========================================================
-         * ESPERAR A EMULATORJS
+         * TEST CWRAP
          * =========================================================
          */
 
-        var achievementDebugStarted =
+        function testCwrapFunction(
+            Module,
+            name,
+            returnType,
+            argTypes
+        ) {
+
+            debugLog(
+                "Probando cwrap('" +
+                name +
+                "')..."
+            );
+
+
+            try {
+
+                var fn =
+                    Module.cwrap(
+                        name,
+                        returnType,
+                        argTypes
+                    );
+
+
+                debugLog(
+                    "cwrap('" +
+                    name +
+                    "') creado correctamente.",
+                    "ok"
+                );
+
+
+                debugLog(
+                    "typeof wrapper = " +
+                    typeof fn
+                );
+
+
+                return fn;
+
+            } catch (error) {
+
+                debugLog(
+                    "cwrap('" +
+                    name +
+                    "') FALLÓ: " +
+                    error,
+                    "err"
+                );
+
+
+                return null;
+
+            }
+
+        }
+
+
+        /*
+         * =========================================================
+         * PRUEBA DE MEMORIA LIBRETRO
+         * =========================================================
+         */
+
+        function achievementDebugMemory() {
+
+            debugLog("");
+
+            debugLog(
+                "========================================"
+            );
+
+            debugLog(
+                "PRUEBA DE MEMORIA LIBRETRO",
+                "info"
+            );
+
+            debugLog(
+                "========================================"
+            );
+
+
+            var Module =
+                getModule();
+
+
+            if (!Module) {
+                return;
+            }
+
+
+            if (
+                typeof Module.cwrap !==
+                "function"
+            ) {
+
+                debugLog(
+                    "Module.cwrap no está disponible.",
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * CONSTANTE LIBRETRO
+             * -----------------------------------------------------
+             *
+             * RETRO_MEMORY_SYSTEM_RAM = 2
+             */
+
+            var RETRO_MEMORY_SYSTEM_RAM = 2;
+
+
+            debugLog(
+                "RETRO_MEMORY_SYSTEM_RAM = " +
+                RETRO_MEMORY_SYSTEM_RAM
+            );
+
+
+            /*
+             * -----------------------------------------------------
+             * retro_get_memory_data
+             * -----------------------------------------------------
+             */
+
+            debugLog("");
+
+            debugLog(
+                "------ retro_get_memory_data ------"
+            );
+
+
+            var getMemoryData =
+                testCwrapFunction(
+                    Module,
+                    "retro_get_memory_data",
+                    "number",
+                    ["number"]
+                );
+
+
+            /*
+             * -----------------------------------------------------
+             * retro_get_memory_size
+             * -----------------------------------------------------
+             */
+
+            debugLog("");
+
+            debugLog(
+                "------ retro_get_memory_size ------"
+            );
+
+
+            var getMemorySize =
+                testCwrapFunction(
+                    Module,
+                    "retro_get_memory_size",
+                    "number",
+                    ["number"]
+                );
+
+
+            /*
+             * -----------------------------------------------------
+             * Si no existen
+             * -----------------------------------------------------
+             */
+
+            if (
+                !getMemoryData ||
+                !getMemorySize
+            ) {
+
+                debugLog("");
+
+                debugLog(
+                    "No se pudieron crear ambos wrappers.",
+                    "warn"
+                );
+
+                debugLog(
+                    "El siguiente paso será revisar las exportaciones del WASM."
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * Obtener tamaño
+             * -----------------------------------------------------
+             */
+
+            var size;
+
+
+            try {
+
+                debugLog(
+                    "Llamando retro_get_memory_size(2)..."
+                );
+
+
+                size =
+                    getMemorySize(
+                        RETRO_MEMORY_SYSTEM_RAM
+                    );
+
+
+                debugLog(
+                    "Resultado size = " +
+                    size,
+                    "ok"
+                );
+
+            } catch (error) {
+
+                debugLog(
+                    "ERROR llamando retro_get_memory_size: " +
+                    error,
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * Obtener puntero
+             * -----------------------------------------------------
+             */
+
+            var ptr;
+
+
+            try {
+
+                debugLog(
+                    "Llamando retro_get_memory_data(2)..."
+                );
+
+
+                ptr =
+                    getMemoryData(
+                        RETRO_MEMORY_SYSTEM_RAM
+                    );
+
+
+                debugLog(
+                    "Resultado ptr = " +
+                    ptr,
+                    "ok"
+                );
+
+            } catch (error) {
+
+                debugLog(
+                    "ERROR llamando retro_get_memory_data: " +
+                    error,
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * Validación
+             * -----------------------------------------------------
+             */
+
+            debugLog("");
+
+            debugLog(
+                "------ VALIDACIÓN ------"
+            );
+
+
+            if (
+                !Number.isFinite(ptr)
+            ) {
+
+                debugLog(
+                    "El puntero no es un número válido.",
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !Number.isFinite(size)
+            ) {
+
+                debugLog(
+                    "El tamaño no es un número válido.",
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            debugLog(
+                "Puntero: " +
+                ptr
+            );
+
+
+            debugLog(
+                "Tamaño: " +
+                size +
+                " bytes"
+            );
+
+
+            if (ptr < 0) {
+
+                debugLog(
+                    "Puntero negativo.",
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            if (size <= 0) {
+
+                debugLog(
+                    "El tamaño es 0 o negativo.",
+                    "warn"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !Module.HEAPU8
+            ) {
+
+                debugLog(
+                    "Module.HEAPU8 no existe.",
+                    "err"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                ptr + size >
+                Module.HEAPU8.length
+            ) {
+
+                debugLog(
+                    "La región queda fuera de HEAPU8.",
+                    "err"
+                );
+
+                debugLog(
+                    "ptr + size = " +
+                    (ptr + size)
+                );
+
+                debugLog(
+                    "HEAPU8.length = " +
+                    Module.HEAPU8.length
+                );
+
+                return;
+
+            }
+
+
+            debugLog(
+                "La región está dentro de HEAPU8.",
+                "ok"
+            );
+
+
+            /*
+             * -----------------------------------------------------
+             * Crear vista
+             * -----------------------------------------------------
+             */
+
+            var ram =
+                Module.HEAPU8.subarray(
+                    ptr,
+                    ptr + size
+                );
+
+
+            debugLog("");
+
+            debugLog(
+                "------ RAM ------"
+            );
+
+
+            debugLog(
+                "RAM view creada.",
+                "ok"
+            );
+
+
+            debugLog(
+                "ram.length = " +
+                ram.length
+            );
+
+
+            /*
+             * -----------------------------------------------------
+             * HEX
+             * -----------------------------------------------------
+             */
+
+            var bytesToShow =
+                Math.min(
+                    64,
+                    ram.length
+                );
+
+
+            var hex = "";
+
+
+            for (
+                var i = 0;
+                i < bytesToShow;
+                i++
+            ) {
+
+                var value =
+                    ram[i]
+                        .toString(16)
+                        .padStart(2, "0");
+
+
+                hex += value;
+
+
+                if (
+                    i !==
+                    bytesToShow - 1
+                ) {
+
+                    hex += " ";
+
+                }
+
+            }
+
+
+            debugLog(
+                "Primeros " +
+                bytesToShow +
+                " bytes:"
+            );
+
+
+            debugLog(
+                hex
+            );
+
+
+            /*
+             * -----------------------------------------------------
+             * Guardar para consola
+             * -----------------------------------------------------
+             */
+
+            window.achievementDebugRAM =
+                ram;
+
+
+            window.achievementDebugMemoryPointer =
+                ptr;
+
+
+            window.achievementDebugMemorySize =
+                size;
+
+
+            debugLog("");
+
+            debugLog(
+                "window.achievementDebugRAM disponible.",
+                "ok"
+            );
+
+
+            debugLog(
+                "Puedes inspeccionarlo desde DevTools:"
+            );
+
+
+            debugLog(
+                "achievementDebugRAM"
+            );
+
+
+            /*
+             * -----------------------------------------------------
+             * Resumen
+             * -----------------------------------------------------
+             */
+
+            debugLog("");
+
+            debugLog(
+                "========================================"
+            );
+
+            debugLog(
+                "RESULTADO"
+            );
+
+            debugLog(
+                "========================================"
+            );
+
+            debugLog(
+                "Puntero: " +
+                ptr
+            );
+
+            debugLog(
+                "Tamaño: " +
+                size
+            );
+
+            debugLog(
+                "RAM accesible: SÍ",
+                "ok"
+            );
+
+        }
+
+
+        /*
+         * =========================================================
+         * ESPERAR EMULATORJS
+         * =========================================================
+         */
+
+        var emulatorDetected =
             false;
 
 
-        var achievementDebugWatcher =
+        var emulatorWatcher =
             setInterval(
                 function () {
 
                     if (
-                        achievementDebugStarted
+                        emulatorDetected
                     ) {
-
                         return;
-
                     }
 
 
                     if (
                         !window.EJS_emulator
                     ) {
-
                         return;
-
                     }
 
 
-                    achievementDebugStarted =
+                    emulatorDetected =
                         true;
 
 
-                    achievementDebugLog(
+                    debugLog(
                         "EJS_emulator detectado.",
                         "ok"
                     );
@@ -1297,19 +1226,34 @@
                             "start",
                             function () {
 
-                                achievementDebugLog(
+                                debugLog(
                                     "EVENTO: start",
                                     "ok"
                                 );
 
 
-                                achievementDebugInspect();
+                                /*
+                                 * No hacemos la prueba
+                                 * automáticamente.
+                                 *
+                                 * Primero dejamos que el
+                                 * emulador termine de iniciar.
+                                 */
+
+                                setTimeout(
+                                    function () {
+
+                                        achievementDebugInspect();
+
+                                    },
+                                    250
+                                );
 
                             }
                         );
 
 
-                        achievementDebugLog(
+                        debugLog(
                             "Listener 'start' registrado.",
                             "ok"
                         );
@@ -1317,8 +1261,8 @@
 
                     } catch (error) {
 
-                        achievementDebugLog(
-                            "Error registrando evento start: " +
+                        debugLog(
+                            "Error registrando start: " +
                             error,
                             "err"
                         );
@@ -1333,13 +1277,10 @@
 
 
     <!-- ========================================================= -->
-    <!-- EMULATORJS                                                 -->
+    <!-- EMULATORJS                                                -->
     <!-- ========================================================= -->
 
-    <script
-        src="emulatorjs/data/loader.js"
-    ></script>
-
+    <script src="emulatorjs/data/loader.js"></script>
 
 </body>
 
